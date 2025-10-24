@@ -1,11 +1,11 @@
 import express from "express";
 import fs from "fs";
-import {join} from "path";
+import {join, resolve} from "path";
 
 const app = express();
 const port = 3000;
 
-const imageDir = "C:\\Users\\david\\Entwicklung\\imagegallery\\server\\images";
+const imageDir = "server/images";
 let imageCodes = {}
 
 app.use(express.json());
@@ -36,7 +36,7 @@ app.get('/image', (req, res) => {
         res.sendStatus(403);
         return;
     }
-    res.sendFile(join(path, imageName));
+    res.sendFile(resolve(join(path, imageName)));
 });
 
 app.listen(port, () => {
@@ -45,11 +45,13 @@ app.listen(port, () => {
     console.log("Bilder werden geladen...");
     fs.readdir(imageDir, (err, files) => {
         files.forEach((file) => {
-           fs.readFile(join(imageDir, file, 'images.json'), (err, data) => {
-               const imagesData = JSON.parse(data.toString());
-               imageCodes[imagesData.code] = join(imageDir, file);
-               console.log(`Bilder aus "${file}" mit Code "${imagesData.code}" verknüpft`);
-           });
+            if(fs.lstatSync(join(imageDir, file)).isDirectory()) {
+                fs.readFile(join(imageDir, file, 'images.json'), (err, data) => {
+                    const imagesData = JSON.parse(data.toString());
+                    imageCodes[imagesData.code] = join(imageDir, file);
+                    console.log(`Bilder aus "${file}" mit Code "${imagesData.code}" verknüpft`);
+                });
+            }
         });
     });
 });
